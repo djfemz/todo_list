@@ -33,7 +33,9 @@ module todo_list::todo_list{
         let task_added = vector::borrow<String>(&list.tasks, list.tasks.length() - 1);
         (*task_added, true) // * --> used to dereference (obtain object) from reference
     }
-    // update tasks in todo_list
+    // TODO: implement remove_task feature of todo_list
+
+    // TODO: implement mark_task_done feature of todo_list
 
 
     #[test]
