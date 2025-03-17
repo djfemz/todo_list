@@ -1,15 +1,16 @@
-
 module todo_list::todo_list{
-    use std::string::String;
     use std::string;
-    #[test_only]
+    use std::string::String;
     use std::vector;
+    #[test_only]
+    use std::debug;
     #[test_only]
     use sui::object;
     #[test_only]
-    use sui::tx_context;
-    use rand::Rng;
-    use rand;
+    use sui::test_scenario;
+    #[test_only]
+    use sui::transfer;
+
 
     #[allow(unused_field)]
     public struct TodoList has key{
@@ -17,41 +18,53 @@ module todo_list::todo_list{
         tasks:vector<String>
     }
 
+    // public fun new(ctx: &mut TxContext) :&mut TodoList{
+    //     let todo_list = &mut TodoList{
+    //         id: object::new(ctx),
+    //         tasks: vector[]
+    //     };
+    //     debug::print(todo_list);
+    //     todo_list
+    // }
+
     //add tasks to todo_list
     public fun add_task(list : &mut TodoList, task :String) : (String, bool){
-         (string::utf8(b""), false)
+        list.tasks.push_back(task);
+        let task_added = vector::borrow<String>(&list.tasks, list.tasks.length() - 1);
+        (*task_added, true) // * --> used to dereference (obtain object) from reference
     }
     // update tasks in todo_list
 
 
     #[test]
     public fun add_task_test(){
-        let sender = @0x456;
-        let mock_tx_hash = generate_mock_tx_hash();
-        let current_epoch = system_state.epoch();
-        let current_epoch_ms = tx_context::epoch_timestamp_ms(&mock_ctx);
-        let ids_created:u64 = 12345;
+        // 1. create test_scenario to obtain TxContext for UID of TodoList
+        let sender_address = @0x123;
+        let mut scenario = test_scenario::begin(sender_address);
+        let mock_ctx = test_scenario::ctx(&mut scenario);
 
-        let mock_ctx = tx_context::new(sender, mock_tx_hash, current_epoch, current_epoch_ms, ids_created);
-
-        let my_todo_list = TodoList{
-            id:object::new(&mut mock_ctx),
-            tasks: vector::empty()
+        // 2. instantiate TodoList
+        let mut my_todo_list = TodoList{
+            id:object::new(mock_ctx),
+            tasks:vector[]
         };
+        //3. add task to TodoList
+        let first_task = string::utf8(b"start everyday with a dose of SUI");
+        let (task_added, status) = my_todo_list.add_task(first_task);
 
-        let task = string::utf8(b"learn sui everyday");
-        let (task_added, status) = add_task(&mut my_todo_list, task);
-        assert!(task_added==task, 0);
-        assert!(status==true, 0)
+        debug::print(&my_todo_list); // & --> used to obtain a reference to an object
+        assert!(task_added==first_task, 0);
+        assert!(status==true, 0);
+        //4. transfer TodoList to my address.
+        transfer::transfer(my_todo_list, mock_ctx.sender());
+
+        //5. terminate test scenario
+        test_scenario::end(scenario);
     }
 
 
 
-    fun generate_mock_tx_hash() : vector<u8> {
-        let mut rng = rand::thread_rng();
-        let tx_hash_length = 32; // Assuming the length is 32 bytes
-        (0..tx_hash_length).map(|_| rng.gen()).collect()
-    }
+
 }
 
 
