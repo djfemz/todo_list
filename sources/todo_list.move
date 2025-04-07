@@ -48,21 +48,19 @@ module todo_list::todo_list{
     // TODO: implement remove_task feature of todo_list
 
     // TODO: implement mark_task_done feature of todo_list
-    public fun mark_task_complete(list : &mut TodoList, id:UID): bool{
-        let index:u64 =0;
+    public fun mark_task_complete(list : &mut TodoList, task_address : address): bool{
+        let mut index:u64 =0;
         while(index < list.tasks.length()){
-            let mut task = vector::borrow_mut<Task>(list.tasks, index);
-            if(task.id == id){
+            let task = vector::borrow_mut<Task>(&mut list.tasks, index);
+            if(object::uid_to_address(&task.id) == task_address){
                 task.is_completed = true;
-                return true
-            }
+                return task.is_completed
+            };
+            index = index + 1;
         };
         false
     }
 
-    fun update_task_status(task: Task, id:UID){
-
-    }
 
     #[test]
     public fun add_task_test(){
@@ -94,26 +92,38 @@ module todo_list::todo_list{
     public fun test_can_mark_task_done(){
         let sender_address = @0x123;
         let mut scenario = test_scenario::begin(sender_address);
-        let mock_ctx = test_scenario::ctx(&mut scenario);
+        let test_ctx = test_scenario::ctx(&mut scenario);
         // TODO: 1. create a todo_list
         let mut my_todo_list = TodoList{
-            id:object::new(mock_ctx),
-            tasks:vector[]
+            id:object::new(test_ctx),
+            tasks:vector[
+                Task{
+                    id: object::new(test_ctx),
+                    name:string::utf8(b"task 1"),
+                    is_completed:false
+                },
+                 Task{
+                    id: object::new(test_ctx),
+                    name:string::utf8(b"task 2"),
+                    is_completed:false
+                },
+                 Task{
+                    id: object::new(test_ctx),
+                    name:string::utf8(b"task 3"),
+                    is_completed:false
+                }
+            ]
         };
-        // TODO: 2. add tasks to todo_list
-        let first_task = string::utf8(b"start everyday with a dose of SUI");
-        let (first, _) = my_todo_list.add_task(first_task, mock_ctx);
-        let second_task = string::utf8(b"task 2");
-        let (second, _) = my_todo_list.add_task(second_task, mock_ctx);
-        let third_task = string::utf8(b"task 3");
-        let (third, _) = my_todo_list.add_task(third_task, mock_ctx);
-
         debug::print(&my_todo_list);
         // TODO: 3. mark a task as done
-        let task_status = my_todo_list.mark_task_complete(first.id);
+        let task = &my_todo_list.tasks[0];
+
+        let is_task_done = my_todo_list.mark_task_complete(object::uid_to_address(&task.id));
+        debug::print(&my_todo_list);
         // TODO: 4. check todo_list for task status
-        assert!(task_status==true, 0);
-        transfer::transfer(my_todo_list, mock_ctx.sender());
+
+        assert!(is_task_done==true, 0);
+        transfer::transfer(my_todo_list, test_ctx.sender());
         test_scenario::end(scenario);
     }
 
