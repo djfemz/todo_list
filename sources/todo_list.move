@@ -19,14 +19,13 @@ module todo_list::todo_list{
         name: String,
         is_completed: bool
     }
-    // public fun new(ctx: &mut TxContext) :&mut TodoList{
-    //     let todo_list = &mut TodoList{
-    //         id: object::new(ctx),
-    //         tasks: vector[]
-    //     };
-    //     debug::print(todo_list);
-    //     todo_list
-    // }
+    public fun new(ctx: &mut TxContext){
+        let todo_list =TodoList{
+            id: object::new(ctx),
+            tasks: vector[]
+        };
+        transfer::transfer(todo_list, ctx.sender())
+    }
 
     fun create_task(name:String, ctx:&mut TxContext):Task{
         let task = Task{
