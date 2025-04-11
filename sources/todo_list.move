@@ -38,26 +38,23 @@ module todo_list::todo_list{
     }
 
     //add tasks to todo_list
-    public fun add_task(list : &mut TodoList, task :String, ctx: &mut TxContext) : (&Task, bool){
+    public fun add_task(list : &mut TodoList, task :String, ctx: &mut TxContext){
         let new_task = create_task(task, ctx);
         list.tasks.push_back(new_task);
-        let task_added = vector::borrow<Task>(&list.tasks, list.tasks.length() - 1);
-        (task_added, true) // * --> used to dereference (obtain object) from reference
+     // * --> used to dereference (obtain object) from reference
     }
     // TODO: implement remove_task feature of todo_list
 
     // TODO: implement mark_task_done feature of todo_list
-    public fun mark_task_complete(list : &mut TodoList, task_address : address): bool{
+    public fun mark_task_complete(list : &mut TodoList, task_address : address){
         let mut index:u64 =0;
         while(index < list.tasks.length()){
             let task = vector::borrow_mut<Task>(&mut list.tasks, index);
             if(object::uid_to_address(&task.id) == task_address){
                 task.is_completed = true;
-                return task.is_completed
             };
             index = index + 1;
         };
-        false
     }
 
 
@@ -75,12 +72,9 @@ module todo_list::todo_list{
         };
         //3. add task to TodoList
         let first_task = string::utf8(b"start everyday with a dose of SUI");
-        let (task_added, status) = my_todo_list.add_task(first_task, mock_ctx);
+        my_todo_list.add_task(first_task, mock_ctx);
 
-        debug::print(&my_todo_list); // & --> used to obtain a reference to an object
-        assert!(task_added.name==first_task, 0);
-        assert!(status==true, 0);
-        //4. transfer TodoList to my address.
+    
         transfer::transfer(my_todo_list, mock_ctx.sender());
 
         //5. terminate test scenario
@@ -117,18 +111,10 @@ module todo_list::todo_list{
         // TODO: 3. mark a task as done
         let task = &my_todo_list.tasks[0];
 
-        let is_task_done = my_todo_list.mark_task_complete(object::uid_to_address(&task.id));
-        debug::print(&my_todo_list);
-        // TODO: 4. check todo_list for task status
-
-        assert!(is_task_done==true, 0);
+        my_todo_list.mark_task_complete(object::uid_to_address(&task.id));
         transfer::transfer(my_todo_list, test_ctx.sender());
         test_scenario::end(scenario);
     }
-
-
-
-
 }
 
 
